@@ -14,12 +14,17 @@ import {useChatStore} from "../../lib/chatStore"
 
 
 const Chat = () => {
-const [chat, setChat] = useState(false);
+const [chat, setChat] = useState();
 const [open, setOpen] = useState(false);
 const [text, setText] = useState("");
+const [img, setImg] = useState({
+    file: null,
+    url: "",
+});
+
 
 const {currentUser} = useUserStore();
-const {chatId} = useChatStore();
+const {chatId, user} = useChatStore();
 
 const endRef = useRef(null);
 
@@ -35,7 +40,7 @@ useEffect(()=>{
     return () =>{
         unSub();
     }
-},[]);
+},[chatId]);
 
 const handleEmoji = e =>{
     setText((prev) => prev + e.emoji);
@@ -56,16 +61,27 @@ const handleSend = async()=>{
 
         const userIDs = [currentUser.id, user.id]
 
-        const userChatsRef = doc(db, "userChats", currentUser.id)
-        const userChatsSnapshot = await getDoc(userChatsRef)
+        userIDs.forEach(async (id)=>{
+            const userChatsRef = doc(db, "userChats", id)
+            const userChatsSnapshot = await getDoc(userChatsRef)
 
-        if(userChatsSnapshot.exists()) {
-            const userChatsData = userChatsSnapshot.data();
+            if(userChatsSnapshot.exists()) {
+                const userChatsData = userChatsSnapshot.data();
 
-            const chatIndex = userChatsData.chats.findIndex(c=> c.chatId === chatId)
+                const chatIndex = userChatsData.chats.findIndex(c=> c.chatId === chatId)
 
-            userChatsData[chatIndex].lastMessage = text
-        }
+                userChatsData.chats[chatIndex].lastMessage = text;
+                userChatsData.chats[chatIndex].isSeen = id === currentUser.id ? true : false;
+                userChatsData.chats[chatIndex].updatedAt = Date.now();
+
+                await updateDoc(userChatsRef, {
+                    chats: userChatsData.chats,
+                });
+
+            }
+        })
+
+
 
     }catch (err){
         console.log(err);

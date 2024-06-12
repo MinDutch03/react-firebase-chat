@@ -4,7 +4,7 @@ import {toast} from "react-toastify"
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword} from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import {auth, db} from "../../lib/firebase";
-import {upload} from "../../lib/upload"
+import upload from "../../lib/upload"
 
 
 const Login = () =>{

@@ -3,7 +3,7 @@ import { create } from 'zustand';
 import { db } from "./firebase";
 import { useUserStore } from "./userStore";
 
-export const useStore = create((set) => ({
+export const useChatStore = create((set) => ({
     chatId: null,
     isCurrentUserBlocked: false,
     user: null,
