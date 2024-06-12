@@ -129,9 +129,9 @@
             }
         }
 
-        .input{
+        input{
             flex: 1;
-            background-color: transparent;
+            background-color: rgba(17, 25, 40, 0.3);
             border: none;
             outline: none;
             color: white;

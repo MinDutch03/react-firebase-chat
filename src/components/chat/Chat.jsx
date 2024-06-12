@@ -1,14 +1,76 @@
 import "./chat.css"
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import EmojiPicker from "emoji-picker-react"
+import{
+    doc,
+    getDoc,
+    updateDoc,
+    onSnapshot,
+    arrayUnion,
+}from "firebase/firestore";
+import {db} from "../../lib/firebase";
+import { useUserStore } from "../../lib/userStore";
+import {useChatStore} from "../../lib/chatStore"
+
 
 const Chat = () => {
+const [chat, setChat] = useState(false);
 const [open, setOpen] = useState(false);
 const [text, setText] = useState("");
+
+const {currentUser} = useUserStore();
+const {chatId} = useChatStore();
+
+const endRef = useRef(null);
+
+useEffect(()=>{
+    endRef.current?. scrollIntoView({behavior:"smooth"});
+}, []);
+
+useEffect(()=>{
+    const unSub = onSnapshot(doc(db,"chats", chatId), (res)=>{
+        setChat(res.data())
+    })
+
+    return () =>{
+        unSub();
+    }
+},[]);
+
 const handleEmoji = e =>{
     setText((prev) => prev + e.emoji);
     setOpen(false);
 };
+
+const handleSend = async()=>{
+    if (text === "") return;
+
+    try{
+        await updateDoc(doc(db, "chats", chatId),{
+            messages:arrayUnion({
+                senderId: currentUser.id,
+                text,
+                createdAt: new Date(),
+            }),
+        });
+
+        const userIDs = [currentUser.id, user.id]
+
+        const userChatsRef = doc(db, "userChats", currentUser.id)
+        const userChatsSnapshot = await getDoc(userChatsRef)
+
+        if(userChatsSnapshot.exists()) {
+            const userChatsData = userChatsSnapshot.data();
+
+            const chatIndex = userChatsData.chats.findIndex(c=> c.chatId === chatId)
+
+            userChatsData[chatIndex].lastMessage = text
+        }
+
+    }catch (err){
+        console.log(err);
+    }
+}
 
     return (
         <div className='chat'>
@@ -36,11 +98,12 @@ const handleEmoji = e =>{
                 </div>
                 <div className="message own">
                     <div className="texts">
-                        <img src="https://storage.cloud.google.com/img-dutch/pexels-jan-van-der-wolf-11680885-19155212.jpg?authuser=1" alt="" />
+                        <img src="https://i.pinimg.com/originals/e7/31/a8/e731a82355eaaecc3c0ebe986941e563.jpg" alt="" />
                         <p>sgyagdd</p>
                         <span>1 min ago</span>
                     </div>
                 </div>
+                <div ref={endRef}></div>
                 <div className="message">
                     <img src="./avatar.png" alt="" />
                     <div className="texts">
@@ -70,7 +133,7 @@ const handleEmoji = e =>{
                         <EmojiPicker open={open} onEmojiClick={handleEmoji} />
                     </div>
                 </div>
-                <button className="sendButton">Send</button>
+                <button className="sendButton" onClick={handleSend}>Send</button>
             </div>
         </div>
     )
