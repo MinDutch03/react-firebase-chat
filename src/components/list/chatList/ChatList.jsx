@@ -18,9 +18,9 @@ const ChatList = () => {
             const items = res.data().chats;
             const promises = items.map(async (item) => {
                 const userDocRef = doc(db, "users", items.receiverId);
-                const userSnap = await getDoc(userDocRef);
+                const userDocSnap = await getDoc(userDocRef);
 
-                const user = userSnap.data();
+                const user = userDocSnap.data();
 
                 return {...item, user};
             });
@@ -31,7 +31,7 @@ const ChatList = () => {
 
         });
         return() =>{
-            unSub
+            unSub();
         }
     }, [currentUser.id]);
 

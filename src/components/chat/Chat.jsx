@@ -11,6 +11,7 @@ import{
 import {db} from "../../lib/firebase";
 import { useUserStore } from "../../lib/userStore";
 import {useChatStore} from "../../lib/chatStore"
+import upload from "../../lib/upload";
 
 
 const Chat = () => {
@@ -47,15 +48,31 @@ const handleEmoji = e =>{
     setOpen(false);
 };
 
+const handleImg = (e) =>{
+    if (e.target.files[0]){
+        setImg({
+            file: e.target.files[0],
+            url: URL.createObjectURL(e.target.files[0]),
+        });
+    }
+}
+
 const handleSend = async()=>{
     if (text === "") return;
 
+    let imgUrl = null;
+
     try{
+        if(img.file){
+            imgUrl = await upload(img.file);
+        }
+
         await updateDoc(doc(db, "chats", chatId),{
             messages:arrayUnion({
                 senderId: currentUser.id,
                 text,
                 createdAt: new Date(),
+                ...(imgUrl && {img: imgUrl}),
             }),
         });
 
@@ -86,15 +103,22 @@ const handleSend = async()=>{
     }catch (err){
         console.log(err);
     }
-}
+
+    setImg({
+        file: null,
+        url:""
+    })
+
+    setText("")
+};
 
     return (
         <div className='chat'>
             <div className="top">
                 <div className="user">
-                    <img src="./avatar.png" alt="" />
+                    <img src={user?.avatar || "./avatar.png"} alt="" />
                     <div className="texts">
-                        <span>Jane Doe</span>
+                        <span>{user?.username}</span>
                         <p>ahfjffjf</p>
                     </div>
                 </div>
@@ -105,38 +129,30 @@ const handleSend = async()=>{
                 </div>
             </div>
             <div className="center">
-                <div className="message">
-                    <img src="./avatar.png" alt="" />
+                {chat?.message?.map((message) =>(
+                    <div className={message.senderId === currentUser.id ? "message own" : "message"} key={message?.createdAt}>
+                        <div className="texts">
+                            {message.img && <img src={message.img} alt=""/>}
+                            <p>{message.text}</p>
+                            {/* <span> {message} </span> */}
+                        </div>
+                    </div>
+                ))}
+                {img.url &&(<div className="message own">
                     <div className="texts">
-                        <p>sgyagdd</p>
-                        <span>1 min ago</span>
+                        <img src={img.url} alt=""/>
                     </div>
                 </div>
-                <div className="message own">
-                    <div className="texts">
-                        <img src="https://i.pinimg.com/originals/e7/31/a8/e731a82355eaaecc3c0ebe986941e563.jpg" alt="" />
-                        <p>sgyagdd</p>
-                        <span>1 min ago</span>
-                    </div>
-                </div>
-                <div ref={endRef}></div>
-                <div className="message">
-                    <img src="./avatar.png" alt="" />
-                    <div className="texts">
-                        <p>sgyagdd</p>
-                        <span>1 min ago</span>
-                    </div>
-                </div>
-                <div className="message own">
-                    <div className="texts">
-                        <p>sgyagdd</p>
-                        <span>1 min ago</span>
-                    </div>
-                </div>
+            )}
             </div>
+
             <div className="bottom">
                 <div className="icons">
-                    <img src="./img.png" alt="" />
+                <label htmlFor="file">
+                <img src="./img.png" alt="" />
+                </label>
+
+                    <input type="file" id= "file" style={{display: "none"}} onChange={handleImg} />
                     <img src="./camera.png" alt="" />
                     <img src="./mic.png" alt="" />
                 </div>
