@@ -25,7 +25,7 @@ const [img, setImg] = useState({
 
 
 const {currentUser} = useUserStore();
-const {chatId, user} = useChatStore();
+const {chatId, user, isCurrentUserBlocked, isReceiverBlocked} = useChatStore();
 
 const endRef = useRef(null);
 
@@ -152,20 +152,21 @@ const handleSend = async()=>{
                 <img src="./img.png" alt="" />
                 </label>
 
-                    <input type="file" id= "file" style={{display: "none"}} onChange={handleImg} />
-                    <img src="./camera.png" alt="" />
-                    <img src="./mic.png" alt="" />
+                <input type="file" id= "file" style={{display: "none"}} onChange={handleImg} disabled={isCurrentUserBlocked || isReceiverBlocked} />
+                <img src="./camera.png" alt="" />
+                <img src="./mic.png" alt="" />
                 </div>
-                <input type="text" placeholder="Type a message..."
+                <input type="text" placeholder={(isCurrentUserBlocked || isReceiverBlocked) ? "You cannot send a message" : "Type a message..."}
                 value={text}
-                onChange={(e) => setText(e.target.value)} />
+                onChange={(e) => setText(e.target.value)}
+                disabled={isCurrentUserBlocked || isReceiverBlocked} />
                 <div className="emoji">
                     <img src="./emoji.png" alt=""onClick={()=>setOpen((prev)=> !prev)} />
                     <div className="picker">
                         <EmojiPicker open={open} onEmojiClick={handleEmoji} />
                     </div>
                 </div>
-                <button className="sendButton" onClick={handleSend}>Send</button>
+                <button className="sendButton" onClick={handleSend} disabled={isCurrentUserBlocked || isReceiverBlocked}>Send</button>
             </div>
         </div>
     )
